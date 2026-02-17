@@ -1,3 +1,8 @@
+let CACHE = [];
+let LAST_UPDATE = 0;
+const CACHE_TTL = 60 * 1000; // 1 хв
+
+
 import ccxt from "ccxt";
 import express from "express";
 
@@ -11,6 +16,12 @@ const exchanges = {
 
 
 app.get("/funding", async (req, res) => {
+  const now = Date.now();
+
+  if (now - LAST_UPDATE < CACHE_TTL && CACHE.length) {
+    return res.json(CACHE);
+  }
+
   let out = [];
 
   for (const [name, ex] of Object.entries(exchanges)) {
@@ -22,18 +33,20 @@ app.get("/funding", async (req, res) => {
           symbol: s,
           exchange: name,
           funding: (r.fundingRate * 100).toFixed(4),
-          price: r.markPrice,
           next: new Date(r.nextFundingTimestamp).toLocaleTimeString(),
         });
       }
-    } catch (err) {
-      console.error(`❌ ${name} error`, err.message);
-      // ПРОПУСКАЄМО біржу, але сервер ЖИВЕ
+    } catch (e) {
+      console.log(name, "skipped");
     }
   }
 
+  CACHE = out;
+  LAST_UPDATE = now;
+
   res.json(out);
 });
+
 
 
 app.listen(port, () => console.log("backend ok"));
