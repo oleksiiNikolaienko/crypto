@@ -5,10 +5,10 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const exchanges = {
-  bybit: new ccxt.bybit(),
   binance: new ccxt.binance(),
   okx: new ccxt.okx(),
 };
+
 
 app.get("/funding", async (req, res) => {
   let out = [];
