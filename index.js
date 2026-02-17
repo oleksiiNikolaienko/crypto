@@ -12,20 +12,28 @@ const exchanges = {
 
 app.get("/funding", async (req, res) => {
   let out = [];
+
   for (const [name, ex] of Object.entries(exchanges)) {
-    const rates = await ex.fetchFundingRates();
-    for (const s in rates) {
-      const r = rates[s];
-      out.push({
-        symbol: s,
-        exchange: name,
-        funding: (r.fundingRate * 100).toFixed(4),
-        price: r.markPrice,
-        next: new Date(r.nextFundingTimestamp).toLocaleTimeString(),
-      });
+    try {
+      const rates = await ex.fetchFundingRates();
+      for (const s in rates) {
+        const r = rates[s];
+        out.push({
+          symbol: s,
+          exchange: name,
+          funding: (r.fundingRate * 100).toFixed(4),
+          price: r.markPrice,
+          next: new Date(r.nextFundingTimestamp).toLocaleTimeString(),
+        });
+      }
+    } catch (err) {
+      console.error(`❌ ${name} error`, err.message);
+      // ПРОПУСКАЄМО біржу, але сервер ЖИВЕ
     }
   }
+
   res.json(out);
 });
+
 
 app.listen(port, () => console.log("backend ok"));
