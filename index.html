@@ -30,21 +30,30 @@
 </table>
 
 <script>
-fetch("BACKEND_URL")
+const API = "https://crypto-mt0o.onrender.com/funding";
+let DATA = [];
+
+function render() {
+  document.getElementById("rows").innerHTML =
+    DATA.map(x => `
+      <tr>
+        <td>${x.symbol}</td>
+        <td>${x.exchange}</td>
+        <td>${x.price ? "$" + x.price : "-"}</td>
+        <td class="neg">${x.funding}%</td>
+        <td>${x.next}</td>
+      </tr>
+    `).join("");
+}
+
+fetch(API)
   .then(r => r.json())
   .then(data => {
-    document.getElementById("rows").innerHTML =
-      data.map(x => `
-        <tr>
-          <td>${x.symbol}</td>
-          <td>${x.exchange}</td>
-          <td>$${x.price}</td>
-          <td class="neg">${x.funding}%</td>
-          <td>${x.next}</td>
-        </tr>
-      `).join("");
+    DATA = data.sort((a, b) => b.funding - a.funding);
+    render();
   });
 </script>
+
 
 </body>
 </html>
