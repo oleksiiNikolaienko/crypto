@@ -2,66 +2,47 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Crypto Funding Dashboard</title>
+    <title>Crypto Funding</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .negative { color: #ef4444; }
-        .positive { color: #22c55e; }
-    </style>
 </head>
-<body class="bg-gray-900 text-white p-8">
-    <h1 class="text-3xl font-bold mb-6">Фандінг</h1>
-    
-    <div class="overflow-x-auto bg-gray-800 rounded-lg">
-        <table class="min-w-full table-auto">
-            <thead>
-                <tr class="bg-gray-700 text-gray-400 text-sm">
-                    <th class="px-4 py-3 text-left">Монета</th>
-                    <th class="px-4 py-3 text-left">Біржа</th>
-                    <th class="px-4 py-3 text-left">Фандінг</th>
-                    <th class="px-4 py-3 text-left">Графік (Placeholder)</th>
-                </tr>
-            </thead>
-            <tbody id="data-table">
-                </tbody>
-        </table>
-    </div>
+<body class="bg-gray-900 text-white p-5">
+    <h1 class="text-2xl font-bold mb-4">Мій Фандінг</h1>
+    <div id="status" class="text-sm text-gray-400 mb-2">Завантаження даних...</div>
+    <table class="min-w-full bg-gray-800 rounded-lg overflow-hidden">
+        <thead class="bg-gray-700">
+            <tr>
+                <th class="p-3 text-left">Монета</th>
+                <th class="p-3 text-left">Біржа</th>
+                <th class="p-3 text-left">Ставка</th>
+            </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+    </table>
 
     <script>
-        const WORKER_URL = 'https://crypto.olexii-nikolaenko.workers.dev';
-
-        async function fetchData() {
+        async function loadData() {
+            const url = 'https://crypto.olexii-nikolaenko.workers.dev/';
             try {
-                const response = await fetch(WORKER_URL);
-                const result = await response.json();
+                const res = await fetch(url);
+                const json = await res.json();
+                const data = json.data || [];
                 
-                // Coinglass зазвичай повертає дані в полі .data
-                const data = result.data || [];
-                const tableBody = document.getElementById('data-table');
-                
-                tableBody.innerHTML = data.map(item => {
-                    const rate = parseFloat(item.uRate || 0);
-                    const colorClass = rate < 0 ? 'negative' : 'positive';
-                    
-                    return `
-                        <tr class="border-b border-gray-700 hover:bg-gray-750">
-                            <td class="px-4 py-4 font-bold">${item.symbol}</td>
-                            <td class="px-4 py-4 text-gray-400">${item.exchangeName}</td>
-                            <td class="px-4 py-4 ${colorClass}">${rate.toFixed(4)}%</td>
-                            <td class="px-4 py-4">
-                                <div class="h-8 w-24 bg-gray-600 rounded"></div>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            } catch (error) {
-                console.error('Помилка завантаження:', error);
+                document.getElementById('table-body').innerHTML = data.map(i => `
+                    <tr class="border-b border-gray-700">
+                        <td class="p-3 font-bold">${i.symbol}</td>
+                        <td class="p-3 text-gray-400">${i.exchangeName}</td>
+                        <td class="p-3 ${parseFloat(i.uRate) < 0 ? 'text-red-400' : 'text-green-400'}">
+                            ${parseFloat(i.uRate).toFixed(4)}%
+                        </td>
+                    </tr>
+                `).join('');
+                document.getElementById('status').innerText = 'Оновлено: ' + new Date().toLocaleTimeString();
+            } catch (e) {
+                document.getElementById('status').innerText = 'Помилка: ' + e.message;
             }
         }
-
-        fetchData();
-        // Оновлення кожні 60 секунд
-        setInterval(fetchData, 60000);
+        loadData();
+        setInterval(loadData, 30000);
     </script>
 </body>
 </html>
